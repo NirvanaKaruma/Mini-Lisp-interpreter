@@ -11,7 +11,7 @@ EvalEnv::EvalEnv() {
     }
 }
 
-void EvalEnv::addSymbol(std::string name, ValuePtr value) {
+void EvalEnv::defineBinding(std::string& name, ValuePtr value) {
     symbolTable[name] = value;
 }
 

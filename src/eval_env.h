@@ -14,7 +14,7 @@ class EvalEnv {
 public:
     EvalEnv();
     ValuePtr eval(ValuePtr expr);
-    void addSymbol(std::string name, ValuePtr value);
+    void defineBinding(std::string& name, ValuePtr value);
     ValuePtr apply(ValuePtr proc, std::vector<ValuePtr> args);
     std::vector<ValuePtr> evalList(ValuePtr expr);
 private:

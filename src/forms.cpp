@@ -31,7 +31,7 @@ ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
     auto first = args[0];
     if(first->asSymbol()){
         auto name = first->asSymbol();
-        env.addSymbol(*name, env.eval(args[1]));
+        env.defineBinding(*name, env.eval(args[1]));
         return std::make_shared<NilValue>();
     } else if (first->isPair()){
         auto name = first->CAR()->asSymbol();
@@ -39,7 +39,7 @@ ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
         params.push_back(first->CDR());
         params.push_back(args[1]);
         ValuePtr lambda = lambdaForm(params, env);
-        env.addSymbol(*name, lambda);
+        env.defineBinding(*name, lambda);
         return std::make_shared<NilValue>();
     } else {
         throw LispError("Unimplemented");
