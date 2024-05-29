@@ -14,10 +14,11 @@ class EvalEnv : public std::enable_shared_from_this<EvalEnv>{
 public:
     EvalEnv();
     ValuePtr eval(ValuePtr expr);
-    void defineBinding(std::string& name, ValuePtr value);
+    void defineBinding(const std::string& name, ValuePtr value);
     ValuePtr apply(ValuePtr proc, std::vector<ValuePtr> args);
     std::vector<ValuePtr> evalList(ValuePtr expr);
     ValuePtr lookupBinding(const std::string& name);
+    std::shared_ptr<EvalEnv> createChild(const std::vector<std::string>& params, const std::vector<ValuePtr>& args);
 private:
     std::unordered_map<std::string, ValuePtr> symbolTable;
     std::shared_ptr<EvalEnv> parent;

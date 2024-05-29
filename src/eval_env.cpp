@@ -11,8 +11,34 @@ EvalEnv::EvalEnv() : parent(nullptr) {
     }
 }
 
-void EvalEnv::defineBinding(std::string& name, ValuePtr value) {
+std::shared_ptr<EvalEnv> EvalEnv::createChild(const std::vector<std::string>& params, const std::vector<ValuePtr>& args){
+    if (args.size() != params.size()) throw LispError("arguments not matched");
+    std::shared_ptr<EvalEnv> child{new EvalEnv};
+    child->symbolTable.clear();
+    child->parent = this->shared_from_this();
+    for(int i = 0; i < params.size(); i++){
+        child->defineBinding(params[i], args[i]);
+    }
+    return child;
+}
+
+void EvalEnv::defineBinding(const std::string& name, ValuePtr value) {
     symbolTable[name] = value;
+}
+
+
+ValuePtr EvalEnv::eval(ValuePtr expr) {
+    if (expr->isSelfEvaluating()) {
+        return expr;
+    } else if (expr->isNil()) {
+        throw LispError("Evaluating nil is prohibited.");
+    } else if (expr->asSymbol()) {
+        return evalSymbol(expr);
+    } else if (expr->isPair()) { 
+        return evalPair(expr);
+    } else {
+        throw LispError("Unimplemented");
+    }
 }
 
 ValuePtr EvalEnv::lookupBinding(const std::string& name) {
@@ -20,63 +46,43 @@ ValuePtr EvalEnv::lookupBinding(const std::string& name) {
     if (it != symbolTable.end()) {
         return it->second;
     } else if (parent) {
-        return parent->lookupBinding(name); // 上溯查找
+        return parent->lookupBinding(name); // 递归查找
     } else {
         throw LispError("Variable " + name + " not defined.");
     }
 }
-
-ValuePtr EvalEnv::eval(ValuePtr expr){
-    if (expr->isSelfEvaluating()){
-        return expr;
-    } else if (expr->isNil()){
-        throw LispError("Evaluating nil is prohibited.");
-    } else if (expr->asSymbol()){
-        return evalSymbol(expr);
-    } else if (expr->isPair()){
-        return evalPair(expr);
+ValuePtr EvalEnv::evalSymbol(ValuePtr expr){
+    if(expr->asSymbol()){
+        return lookupBinding(expr->toString());
     } else {
         throw LispError("Unimplemented");
     }
-};
-
-ValuePtr EvalEnv::evalSymbol(ValuePtr expr){
-    return lookupBinding(expr->toString());
 }
 
 ValuePtr EvalEnv::evalPair(ValuePtr expr){
-    if (expr->isNil()){
-        return std::make_shared<NilValue>();
-    }
     auto list = expr->toVector();
-    if (auto pairExpr = std::dynamic_pointer_cast<PairValue>(expr); pairExpr != nullptr) {
-            if (auto name = pairExpr->CAR()->asSymbol()){
-                if(SPECIAL_FORMS.find(*name) != SPECIAL_FORMS.end()){
-                    ValuePtr result = SPECIAL_FORMS.at(*name)(pairExpr->CDR()->toVector(),*this);
-                    return result;
-                } else {
-                    auto proc = eval(list[0]);
-                    if (pairExpr->CDR() != nullptr) {  // 添加空指针检查
-                        auto cdrExpr = pairExpr->CDR();
-                        std::vector<ValuePtr> args = evalList(cdrExpr);
-                        return apply(proc, args);
-                    } else {
-                    throw LispError("Empty argument list in procedure call.");
-                    }
-                }  
-            } else {
-                throw LispError("Expected symbol but got something else.");
-            }
+    while (list[0]->isPair()) list[0] = eval(list[0]);
+    if (auto name = list[0]->asSymbol()) {
+        if (SPECIAL_FORMS.contains(*name)) {
+            return SPECIAL_FORMS.at(*name)(expr->CDR()->toVector(), *this);
         } else {
-            throw LispError("Expected PairValue but got something else.");
+            ValuePtr proc = this->eval(list[0]);
+            std::vector<ValuePtr> args = evalList(expr->CDR());
+            return this->apply(proc, args);  
         }
-    throw LispError("Unimplemented");
+    } else {
+        ValuePtr proc = list[0];
+        std::vector<ValuePtr> args = evalList(expr->CDR());
+        return apply(proc, args);  
+    }
 }
 
 ValuePtr EvalEnv::apply(ValuePtr proc, std::vector<ValuePtr> args){
     if (typeid(*proc) == typeid(BuiltinProcValue)) {
         // 调用内置过程
         return std::dynamic_pointer_cast<BuiltinProcValue>(proc)->getFunc()(args);
+    } else if (typeid(*proc) == typeid(LambdaValue)) {
+        return std::dynamic_pointer_cast<LambdaValue>(proc)->apply(args);
     } else {
         throw LispError("Unimplemented");
     }

@@ -223,7 +223,7 @@ ValuePtr add(const std::vector<ValuePtr>& params) {
     return std::make_shared<NumericValue>(result);
 }
 ValuePtr minus(const std::vector<ValuePtr>& params){
-    int result = 0;
+    double result = 0;
     for (const auto& i : params) {
         if (!i->isNumber()) {
             throw LispError("Cannot add a non-numeric value.");
@@ -234,7 +234,7 @@ ValuePtr minus(const std::vector<ValuePtr>& params){
 }
 
 ValuePtr times(const std::vector<ValuePtr>& params){
-    int result = 1;
+    double result = 1;
     for (const auto& i : params) {
         if (!i->isNumber()) {
             throw LispError("Cannot add a non-numeric value.");
@@ -245,7 +245,7 @@ ValuePtr times(const std::vector<ValuePtr>& params){
 }
 
 ValuePtr divide(const std::vector<ValuePtr>& params){
-    int result = 1;
+    double result = 1;
     for (const auto& i : params) {
         if (!i->isNumber()) {
             throw LispError("Cannot add a non-numeric value.");
@@ -261,7 +261,7 @@ ValuePtr divide(const std::vector<ValuePtr>& params){
 }
 
 ValuePtr absolute(const std::vector<ValuePtr>& params){
-    int result = 0;
+    double result = 0;
     for (const auto& i : params) {
         if (!i->isNumber()) {
             throw LispError("Cannot add a non-numeric value.");
@@ -282,14 +282,14 @@ ValuePtr expt(const std::vector<ValuePtr>& params){
         throw LispError("Expt expects two numeric arguments.");
     }
 
-    int b = base->asNumber();
-    int e = exponent->asNumber();
+    double b = base->asNumber();
+    double e = exponent->asNumber();
 
     if(b == 0 && e == 0){
         throw LispError("Exponentiation with both base and exponent equal to zero is undefined.");
     }
 
-    int result = pow(b, e);
+    double result = pow(b, e);
     return std::make_shared<NumericValue>(result);
 }
 

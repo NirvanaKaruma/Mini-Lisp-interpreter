@@ -1,7 +1,17 @@
 #include "./forms.h"
+#include <algorithm>
+#include <iterator>
+
 
 std::string LambdaValue::toString() const {
     return "#<procedure>";
+}
+
+ValuePtr LambdaValue::apply(const std::vector<ValuePtr>& args) const{
+    auto kid = this->env->createChild(this->params, args);
+    ValuePtr result;
+    for (const auto& i : this->body) result = kid->eval(i);
+    return result;
 }
 
 ValuePtr lambdaForm(const std::vector<ValuePtr>& args, EvalEnv& env){
@@ -14,18 +24,13 @@ ValuePtr lambdaForm(const std::vector<ValuePtr>& args, EvalEnv& env){
     // 第一个参数是参数列表，第二个参数是过程体
     auto params = args[0]->toVector();
     std::vector<std::string> paramNames;
-    for(auto& param : params){
-        if(param->isSymbol() == false){
-            throw LispError("Lambda parameters must be symbols");
-        }
-        paramNames.push_back(param->toString());
-    }
-    auto body = std::vector<ValuePtr>(args.begin() + 1, args.end());
-    return std::make_shared<LambdaValue>(paramNames, body);
+    std::transform(params.begin(), params.end(), std::back_inserter(paramNames), [](ValuePtr i){return i->toString();});
+    std::vector<ValuePtr> body(args.begin() + 1, args.end());
+    return std::make_shared<LambdaValue>(paramNames, body, env.shared_from_this());
 }
 
 ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
-    if (args.size() != 2) {
+    if (args.size() < 2) {
         throw LispError("Invalid number of arguments for define");
     }
     auto first = args[0];
@@ -34,12 +39,10 @@ ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
         env.defineBinding(*name, env.eval(args[1]));
         return std::make_shared<NilValue>();
     } else if (first->isPair()){
-        auto name = first->CAR()->asSymbol();
-        std::vector<ValuePtr> params;
-        params.push_back(first->CDR());
-        params.push_back(args[1]);
-        ValuePtr lambda = lambdaForm(params, env);
-        env.defineBinding(*name, lambda);
+        auto name = first->CAR()->toString();
+        std::vector<ValuePtr> values{first->CDR()};
+        for (int i = 1; i < args.size(); i++) values.emplace_back(args[i]);
+        env.defineBinding(name, lambdaForm(values, env));
         return std::make_shared<NilValue>();
     } else {
         throw LispError("Unimplemented");
