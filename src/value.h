@@ -121,15 +121,6 @@ private:
     BuiltinFuncType* func;
 };
 
-class LambdaValue : public Value{
-public:
-    LambdaValue(const std::vector<std::string>& params, const std::vector<ValuePtr>& body): params(params), body(body) {}
-    std::string toString() const override;
-
-private:
-    std::vector<std::string> params;
-    std::vector<ValuePtr> body;    
-};
 
 
 #endif

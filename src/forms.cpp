@@ -1,5 +1,9 @@
 #include "./forms.h"
 
+std::string LambdaValue::toString() const {
+    return "#<procedure>";
+}
+
 ValuePtr lambdaForm(const std::vector<ValuePtr>& args, EvalEnv& env){
     if (args.size() < 2) {
         throw LispError("Invalid number of arguments for lambda");

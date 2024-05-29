@@ -48,10 +48,6 @@ std::string BuiltinProcValue::toString() const {
     return "#<procedure>";
 }
 
-std::string LambdaValue::toString() const {
-    return "#<procedure>";
-}
-
 std::vector<ValuePtr> PairValue::toVector() const {
     std::vector<ValuePtr> result;
         const PairValue* current = this;
