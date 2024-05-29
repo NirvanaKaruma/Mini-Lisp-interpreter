@@ -17,6 +17,7 @@ public:
 private:
     std::vector<std::string> params;
     std::vector<ValuePtr> body;    
+    std::shared_ptr<EvalEnv> env;
 };
 
 

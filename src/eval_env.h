@@ -10,15 +10,17 @@
 
 using namespace std::literals;
 
-class EvalEnv {
+class EvalEnv : public std::enable_shared_from_this<EvalEnv>{
 public:
     EvalEnv();
     ValuePtr eval(ValuePtr expr);
     void defineBinding(std::string& name, ValuePtr value);
     ValuePtr apply(ValuePtr proc, std::vector<ValuePtr> args);
     std::vector<ValuePtr> evalList(ValuePtr expr);
+    ValuePtr lookupBinding(const std::string& name);
 private:
     std::unordered_map<std::string, ValuePtr> symbolTable;
+    std::shared_ptr<EvalEnv> parent;
 
     ValuePtr evalSymbol(ValuePtr expr);
     ValuePtr evalPair(ValuePtr expr);

@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <iterator>
 
-EvalEnv::EvalEnv() {
+EvalEnv::EvalEnv() : parent(nullptr) {
     // 循环遍历 builtinProcs 并将所有的内置过程添加到符号表中
     for (const auto& proc : builtinProcs) {
         symbolTable[proc.first] = std::make_shared<BuiltinProcValue>(proc.second);
@@ -13,6 +13,17 @@ EvalEnv::EvalEnv() {
 
 void EvalEnv::defineBinding(std::string& name, ValuePtr value) {
     symbolTable[name] = value;
+}
+
+ValuePtr EvalEnv::lookupBinding(const std::string& name) {
+    auto it = symbolTable.find(name);
+    if (it != symbolTable.end()) {
+        return it->second;
+    } else if (parent) {
+        return parent->lookupBinding(name); // 上溯查找
+    } else {
+        throw LispError("Variable " + name + " not defined.");
+    }
 }
 
 ValuePtr EvalEnv::eval(ValuePtr expr){
@@ -30,13 +41,7 @@ ValuePtr EvalEnv::eval(ValuePtr expr){
 };
 
 ValuePtr EvalEnv::evalSymbol(ValuePtr expr){
-    auto name = expr->asSymbol();
-    auto it = symbolTable.find(*name);
-        if (it != symbolTable.end()){
-            return it->second;
-        } else {
-             throw LispError("Variable " + *name + " not defined.");
-        }
+    return lookupBinding(expr->toString());
 }
 
 ValuePtr EvalEnv::evalPair(ValuePtr expr){
