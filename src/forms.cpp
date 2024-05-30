@@ -89,11 +89,32 @@ ValuePtr orForm(const std::vector<ValuePtr>& args, EvalEnv& env){
     return args.empty() ? std::make_shared<BooleanValue>(false) : env.eval(args.back());
 }
 
+ValuePtr condForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
+    if (args.size() >= 2) {
+        ValuePtr result;
+        for (int i = 0; i < args.size(); i++) {
+            auto relation = args[i]->toVector();
+            if (relation[0]->toString() == "else"){
+                if(i != args.size() - 1) throw LispError("Invalid else position");
+                return env.eval(relation[1]);
+            }
+            if (relation.size() == 1) return env.eval(relation[0]);
+            if (env.eval(relation[0])->asBool()) {
+                result = env.eval(relation[1]);
+                break;
+            }
+        }
+        return result;
+    } else
+        throw LispError("Invalid number of arguments for cond");
+}
+
 const std::unordered_map<std::string, SpecialFormType*> SPECIAL_FORMS{
     {"lambda",lambdaForm},
     {"define", defineForm},
     {"quote", quoteForm},
     {"if", ifForm},
     {"and", andForm},
-    {"or", orForm}
+    {"or", orForm},
+    {"cond", condForm}
 };
