@@ -5,6 +5,7 @@
 #include "./parser.h"
 #include "./eval_env.h"
 #include "./forms.h"
+#include "./file_input.h"
 
 #include "rjsj_test.hpp"
 
@@ -19,15 +20,27 @@ struct TestCtx {
     }
 };
 
-
-int main() {
-    RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv6, Lv7, Lv7Lib, Sicp);
+int main(int argc, char** argv) {
+    //RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv6, Lv7, Lv7Lib, Sicp);
+    //usage : mini_lisp [file]
+    if(argc > 2) throw FileError("Too many arguments");
     std::shared_ptr<EvalEnv> env{new EvalEnv};
-    while (true) {
+    fileInput input;
+    std::ifstream file;
+    if (argc == 1) input = std::cin;
+    else if (argc == 2) {
+        file.open(argv[1]);
+        if (!file.is_open()) {
+            throw FileError("File not found");
+            std::exit(0);
+        }
+        input = file;
+    }
+    while (input) {
         try {
-            std::cout << ">>> " ;
+            if(argc == 1) std::cout << ">>> " ;
             std::string line;
-            std::getline(std::cin, line);
+            getline(input, line);
             if (std::cin.eof()) {
                 std::exit(0);
             }
@@ -35,10 +48,7 @@ int main() {
             Parser parser(std::move(tokens)); // TokenPtr 不支持复制
             auto value = parser.parse();
             auto result = env->eval(std::move(value));
-            std::cout << result->toString() << std::endl; // 输出外部表示
-            for (auto& token : tokens) {
-                std::cout << *token << std::endl;
-            }
+            if(argc == 1) std::cout << result->toString() << std::endl; // 输出外部表示
         } catch (std::runtime_error& e) {
             std::cerr << "Error: " << e.what() << std::endl;
         }
