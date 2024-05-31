@@ -6,8 +6,7 @@
 #include <memory>
 #include <optional>
 #include <vector>
-
-
+#include <functional>
 
 
 class Value{
@@ -112,13 +111,13 @@ class BuiltinProcValue : public Value{
 public:
     using BuiltinFuncType = std::shared_ptr<Value>(const std::vector<ValuePtr>&);
 
-    BuiltinProcValue(BuiltinFuncType* func) : func(func) {}
+    BuiltinProcValue(std::function<BuiltinFuncType> func) : func(func) {}
     std::string toString() const override;
     bool isProcedure() const override { return true; }
-    BuiltinFuncType* getFunc() const { return func; }
+    std::function<BuiltinFuncType> getFunc() const { return func; }
     
 private:
-    BuiltinFuncType* func;
+    std::function<BuiltinFuncType> func;
 };
 
 

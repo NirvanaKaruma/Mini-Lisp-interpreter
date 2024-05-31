@@ -7,8 +7,77 @@
 EvalEnv::EvalEnv() : parent(nullptr) {
     // 循环遍历 builtinProcs 并将所有的内置过程添加到符号表中
     for (const auto& proc : builtinProcs) {
-        symbolTable[proc.first] = std::make_shared<BuiltinProcValue>(proc.second);
+        symbolTable[proc.first] = std::make_shared<BuiltinProcValue>(proc.second);                
     }
+    //特殊内置过程
+    this->defineBinding(
+        "eval",
+        std::make_shared<BuiltinProcValue>([this](const std::vector<ValuePtr>& params) {
+                                                return this->eval(params[0]);})
+    );
+    this->defineBinding(
+        "apply",
+        std::make_shared<BuiltinProcValue>([this](const std::vector<ValuePtr>& params) {
+                                                auto a=params[1];
+                                                return this->apply(params[0],a->toVector());})
+    );    
+    this->defineBinding(
+        "map",
+        std::make_shared<BuiltinProcValue>([this](const std::vector<ValuePtr>& params) {
+                                                if(params.size() != 2) throw LispError("map takes 2 arguments");
+                                                std::vector<ValuePtr> result;
+                                                auto proc = params[0];
+                                                auto values = params[1]->toVector();
+                                                if(proc->isPair()){
+                                                    throw LispError("Unimplemented, waiting for complement");
+                                                } else {
+                                                    for(int i = 0; i < values.size(); i++){
+                                                        std::vector<ValuePtr> arg{values[i]};
+                                                        result.emplace_back(this->apply(proc,arg));
+                                                    }
+                                                    return list(result);
+                                                }
+        })
+    );
+    this->defineBinding(
+        "filter",
+        std::make_shared<BuiltinProcValue>([this](const std::vector<ValuePtr>& params) {
+                                                if(params.size() != 2) throw LispError("filter takes 2 arguments");
+                                                std::vector<ValuePtr> result;
+                                                auto proc = params[0];
+                                                auto values = params[1]->toVector();
+                                                if(proc->isPair()){
+                                                    throw LispError("Unimplemented, waiting for complement");
+                                                } else {
+                                                    for(int i = 0; i < values.size(); i++){
+                                                        if(this->apply(proc,{values[i]})->asBool()){
+                                                            std::vector<ValuePtr> arg{values[i]};
+                                                            result.emplace_back(values[i]);
+                                                        }
+                                                    }
+                                                    return list(result);
+                                                }
+        })
+    );
+    this->defineBinding(
+        "reduce",
+        std::make_shared<BuiltinProcValue>([this](const std::vector<ValuePtr>& params){
+                                                if(params.size() != 2) throw LispError("reduce takes 2 arguments");
+                                                if(params[1]->isNil()) throw LispError("Cannot reduce nilvalue!");
+                                                
+                                                if(params[1]->toVector().size() == 1) return params[1]->toVector()[0];
+                                                else {
+                                                    auto proc = params[0];
+                                                    auto L = params[1]->toVector();
+                                                    auto v = *L.rbegin();
+                                                    for (int i = L.size() - 2; i >= 0;--i) {
+                                                        std::vector<ValuePtr> vt{L[i], v};
+                                                        v = this->apply(proc, vt);
+                                                    }        
+                                                    return v;
+                                                }
+        })
+    );
 }
 
 std::shared_ptr<EvalEnv> EvalEnv::createChild(const std::vector<std::string>& params, const std::vector<ValuePtr>& args){
