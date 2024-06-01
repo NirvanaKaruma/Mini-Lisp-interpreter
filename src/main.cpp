@@ -1,17 +1,19 @@
 #include <iostream>
 #include <string>
+#include <stack>
 
 #include "./tokenizer.h"
 #include "./parser.h"
 #include "./eval_env.h"
 #include "./forms.h"
 #include "./file_input.h"
+#include "./read.h"
 
 #include "rjsj_test.hpp"
 
 struct TestCtx {
     std::shared_ptr<EvalEnv> env{new EvalEnv};
-    std::string eval(std::string input) {
+    std::string eval(std::string input) {        
         auto tokens = Tokenizer::tokenize(input);
         Parser parser(std::move(tokens));
         auto value = parser.parse();
@@ -23,34 +25,16 @@ struct TestCtx {
 int main(int argc, char** argv) {
     //RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv6, Lv7, Lv7Lib, Sicp);
     //usage : mini_lisp [file]
-    if(argc > 2) throw FileError("Too many arguments");
-    std::shared_ptr<EvalEnv> env{new EvalEnv};
-    fileInput input;
-    std::ifstream file;
-    if (argc == 1) input = std::cin;
-    else if (argc == 2) {
-        file.open(argv[1]);
-        if (!file.is_open()) {
-            throw FileError("File not found");
-            std::exit(0);
-        }
-        input = file;
+    switch (argc) {
+        case 1 : 
+            REPLmode();
+            break;
+        case 2 :
+            filemode(argv[1]);
+            break;
+        default :
+            std::cout << "usage : mini_lisp [file]" << std::endl;
+            break;    
     }
-    while (input) {
-        try {
-            if(argc == 1) std::cout << ">>> " ;
-            std::string line;
-            getline(input, line);
-            if (std::cin.eof()) {
-                std::exit(0);
-            }
-            auto tokens = Tokenizer::tokenize(line);
-            Parser parser(std::move(tokens)); // TokenPtr 不支持复制
-            auto value = parser.parse();
-            auto result = env->eval(std::move(value));
-            if(argc == 1) std::cout << result->toString() << std::endl; // 输出外部表示
-        } catch (std::runtime_error& e) {
-            std::cerr << "Error: " << e.what() << std::endl;
-        }
-    }
+    return 0;
 }

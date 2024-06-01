@@ -13,7 +13,7 @@ class Value{
 public:
 
     virtual ~Value() = default;
-    virtual std::string toString() const { return "Oops! It is a BaseValue!"; }
+    virtual std::string toString() const { throw BugError("Oops, it is a base Value!"); }
 
     using ValuePtr = std::shared_ptr<Value>;
     virtual bool isSelfEvaluating() const { return false; }
@@ -27,11 +27,11 @@ public:
     virtual bool isString() const { return false; }
     virtual bool isProcedure() const { return false; }
     virtual double asNumber() const {
-        throw SyntaxError("Cannot convert value to number.");
+        throw BugError("Cannot convert value to number.");
     }
     virtual std::vector<ValuePtr> toVector() const {return {};}
-    virtual std::shared_ptr<Value> CAR(){ throw SyntaxError("Not a pair."); }
-    virtual std::shared_ptr<Value> CDR(){ throw SyntaxError("Not a pair."); }
+    virtual std::shared_ptr<Value> CAR(){ throw BugError("Not a pair."); }
+    virtual std::shared_ptr<Value> CDR(){ throw BugError("Not a pair."); }
     
 };
 

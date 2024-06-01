@@ -68,11 +68,11 @@ EvalEnv::EvalEnv() : parent(nullptr) {
                                                 if(params[1]->toVector().size() == 1) return params[1]->toVector()[0];
                                                 else {
                                                     auto proc = params[0];
-                                                    auto L = params[1]->toVector();
-                                                    auto v = *L.rbegin();
-                                                    for (int i = L.size() - 2; i >= 0;--i) {
-                                                        std::vector<ValuePtr> vt{L[i], v};
-                                                        v = this->apply(proc, vt);
+                                                    auto p = params[1]->toVector();
+                                                    auto v = *p.rbegin();
+                                                    for (int i = p.size() - 2; i >= 0; i--) {
+                                                        std::vector<ValuePtr> args{p[i], v};
+                                                        v = this->apply(proc, args);
                                                     }        
                                                     return v;
                                                 }

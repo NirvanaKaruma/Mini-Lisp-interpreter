@@ -641,5 +641,6 @@ std::unordered_map<std::string, BuiltinProc> builtinProcs = {
     {"even?", &even},
     {"odd?", &odd},
     {"zero?", &zero}
-    // 添加更多的内置过程
+    // 添加更多的内置过程：以下为ex库
+    // 字符运算库
 };
