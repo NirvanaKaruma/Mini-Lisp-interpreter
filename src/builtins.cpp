@@ -248,33 +248,67 @@ ValuePtr list(const std::vector<ValuePtr>& args){
 }
 
 ValuePtr add(const std::vector<ValuePtr>& params) {
-    double result = 0;
-    for (const auto& i : params) {
-        if (!i->isNumber()) {
-            throw LispError("Cannot add a non-numeric value.");
+    if(params[0]->isNumber()){
+        double result = 0;
+        for (const auto& i : params) {
+            if (!i->isNumber()) {
+                throw LispError("Cannot add a non-numeric value.");
+            }
+            result += i->asNumber();
         }
-        result += i->asNumber();
+        return std::make_shared<NumericValue>(result);
+    } else if(params[0]->isMatrix()){
+        int rows = params[0]->getrows();
+        int cols = params[0]->getcols();
+        MatrixValue result(rows,cols);
+        for (const auto& i : params) {
+            if(!i->isMatrix()){
+                throw LispError("Cannot add a non-matrix value.");
+            }
+            MatrixValue temp = dynamic_cast<const MatrixValue&>(*i);
+            result = result + temp;
+        }
+        return std::make_shared<MatrixValue>(result);
     }
-    return std::make_shared<NumericValue>(result);
+    throw LispError("Cannot add a non-matrix and non-numeric value.");
 }
 ValuePtr minus(const std::vector<ValuePtr>& params){
     if(params.size() != 2 && params.size() != 1){
         throw LispError("Minus expects exactly one or two arguments.");
     }
-    double result = 0;
-    if(params.size() == 1){
-        if(!params[0]->isNumber()){
-            throw LispError("Minus expects number(s).");
+    if(params[0]->isNumber()){
+        double result = 0;
+        if(params.size() == 1){
+            if(!params[0]->isNumber()){
+                throw LispError("Minus expects number(s).");
+            }
+            result = -params[0]->asNumber();
         }
-        result = -params[0]->asNumber();
-    }
-    if(params.size() == 2){
-        if(!params[0]->isNumber() || !params[1]->isNumber()){
-            throw LispError("Minus expects number(s).");
+        if(params.size() == 2){
+            if(!params[0]->isNumber() || !params[1]->isNumber()){
+                throw LispError("Minus expects number(s).");
+            }
+            result = params[0]->asNumber() - params[1]->asNumber();
         }
-        result = params[0]->asNumber() - params[1]->asNumber();
+        return std::make_shared<NumericValue>(result);
+    } else if (params[0]->isMatrix()) {
+        int rows = params[0]->getrows();
+        int cols = params[0]->getcols();
+        MatrixValue result(rows,cols);
+        if(params.size() == 1){
+            MatrixValue temp = dynamic_cast<const MatrixValue&>(*params[0]);
+            result = result - temp;
+        } else if(params.size() == 2){
+            if(!params[1]->isMatrix()){
+                throw LispError("Error: - expects a matrix as second argument");
+            }
+            MatrixValue temp1 = dynamic_cast<const MatrixValue&>(*params[0]);
+            MatrixValue temp2 = dynamic_cast<const MatrixValue&>(*params[1]);
+            result = temp1 - temp2;
+        }
+        return std::make_shared<MatrixValue>(result);
     }
-    return std::make_shared<NumericValue>(result);
+    throw LispError("Unexpected values");
 }
 
 ValuePtr times(const std::vector<ValuePtr>& params){
@@ -592,6 +626,330 @@ ValuePtr zero(const std::vector<ValuePtr>& params){
     return std::make_shared<BooleanValue>(result);
 }
 
+ValuePtr max(const std::vector<ValuePtr>& params){
+    if(params.empty()){
+        throw LispError("Max expects at least one argument.");
+    }
+    double result;
+    if(!params[0]->isNumber()){
+        throw LispError("All arguments to max must be numbers.");
+    }
+    result = params[0]->asNumber();
+    for(const auto& i : params){
+        if(!i->isNumber()){
+            throw LispError("All arguments to max must be numbers.");
+        }
+        if(i->asNumber() > result){
+            result = i->asNumber();
+        }
+    }
+    return std::make_shared<NumericValue>(result);
+}
+
+ValuePtr min(const std::vector<ValuePtr>& params){
+    if(params.empty()){
+        throw LispError("Min expects at least one argument.");
+    }
+    double result;
+    if(!params[0]->isNumber()){
+        throw LispError("All arguments to min must be numbers.");
+    }
+    result = params[0]->asNumber();
+    for(const auto& i : params){
+        if(!i->isNumber()){
+            throw LispError("All arguments to min must be numbers.");
+        }
+        if(i->asNumber() < result){
+            result = i->asNumber();
+        }
+    }
+    return std::make_shared<NumericValue>(result);
+}
+
+ValuePtr number2String(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("number->string expects exactly one argument.");
+    }
+    double num = params[0]->asNumber();
+    std::string result;
+    if(num == static_cast<int>(num)){
+        result = std::to_string(static_cast<int>(num));
+    } else {
+        result = std::to_string(num);
+    }
+    return std::make_shared<StringValue>(result);
+}
+
+ValuePtr string2Number(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("string->number expects exactly one argument.");
+    }
+    std::string str = params[0]->asString();
+    try{
+        double num = std::stod(str);
+        return std::make_shared<NumericValue>(num);
+    } catch (std::invalid_argument&) {
+        return std::make_shared<BooleanValue>(false);
+    }
+}
+
+ValuePtr makingStr(const std::vector<ValuePtr>& params){
+    if(params.size() != 1 && params.size() != 2){
+        throw LispError("make-string expects exactly one or two arguments.");
+    }
+    int num = static_cast<int>(params[0]->asNumber());
+    char c = ' ';
+    if(params.size() == 2){
+        if(!params[1]->isString() || params[1]->asString().size() != 1){
+            throw LispError("make-string expects a char as its second argument.");
+        }
+        c = params[1]->asString()[0];
+    }
+    return std::make_shared<StringValue>(std::string(num, c));
+}
+
+ValuePtr strRef(const std::vector<ValuePtr>& params){
+    if(params.size() != 2){
+        throw LispError("string-ref expects exactly two arguments.");
+    }
+    if(!params[0]->isString()){
+        throw LispError("string-ref expects a string as its first argument.");
+    }
+    if(!params[1]->isNumber()){
+        throw LispError("string-ref expects a number as its second argument.");
+    }
+    int pos = params[1]->asNumber();
+    if(pos < 0 || (params[1]->asNumber() != static_cast<int>(params[1]->asNumber()))){
+        throw LispError("string-ref expects a non-negative integer as its second argument.");
+    }
+    if(params[0]->asString().size() <= pos){
+        throw LispError("string-ref expects a position that is less than the length of the string.");
+    }
+    return std::make_shared<StringValue>(std::string(1, params[0]->asString()[pos]));
+}
+
+ValuePtr strLength(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("string-length expects exactly one argument.");
+    }
+    if(!params[0]->isString()){
+        throw LispError("string-length expects a string as its argument.");
+    }
+    return std::make_shared<NumericValue>(params[0]->asString().size());
+}
+
+ValuePtr strCopy(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("string-copy expects exactly one argument.");
+    }
+    if(!params[0]->isString()){
+        throw LispError("string-copy expects a string as its argument.");
+    }
+    std::string str = params[0]->asString();
+    return std::make_shared<StringValue>(str);
+}
+
+ValuePtr subStr(const std::vector<ValuePtr>& params){
+    if(params.size() == 0 || params.size() > 3){
+        throw LispError("subString expects at most three arguments, at least one argument");
+    }
+    if(!params[0]->isString()){
+        throw LispError("subString expects a string as its first argument.");
+    }
+    // 只有一个参数，相当于复制字符串
+    if(params.size() == 1){
+        return strCopy(params);
+    }
+    std::string str = params[0]->asString();
+    int pos = params[1]->asNumber();
+    std::size_t num = std::string::npos;
+    // 两个参数，相当于从某个pos开始截取字符串
+    // 三个参数，相当于从某个pos开始截取num个字符
+    if(params.size() == 3) num = static_cast<std::size_t>(params[2]->asNumber());
+    if (num < 0 || pos < 0 || pos >= str.size()){
+        throw LispError("illegal subString.");
+    }
+    return std::make_shared<StringValue>(str.substr(pos, num));
+}
+
+ValuePtr strAppend(const std::vector<ValuePtr>& params){
+    if(params.size()<2){
+        throw LispError("string-append expects at least two arguments.");
+    }
+    std::string str;
+    for(const auto& i : params){
+        if(!i->isString()){
+            throw LispError("string-append expects a string as its arguments.");
+        }
+        str += i->asString();
+    }
+    return std::make_shared<StringValue>(str);
+}
+
+ValuePtr rationalSet(const std::vector<ValuePtr>& params){
+    if(params.size() != 2 && params.size() != 1){
+        throw LispError("rational-set expects exactly one or two arguments.");
+    }
+    if(params.size() == 1){
+        if(!params[0]->isNumber()){
+            throw LispError("rational-set expects a number as its first argument.");
+        }
+        return std::make_shared<RationalValue>(params[0]->asNumber());
+    }
+    if(!params[0]->isNumber() || !params[1]->isNumber()){
+        throw LispError("rational-set expects numbers as its arguments.");
+    }
+    return std::make_shared<RationalValue>(static_cast<int>(params[0]->asNumber()), static_cast<int>(params[1]->asNumber()));
+}
+
+ValuePtr rationalAdd(const std::vector<ValuePtr>& params){
+    RationalValue result(0);
+    for(const auto& i : params){
+        if(!i->isNumber()){
+            throw LispError("rational-add expects numbers as its arguments.");
+        }
+        RationalValue temp(0);
+        if(!i->isRational()) temp = RationalValue(i->asNumber());
+        else temp = dynamic_cast<const RationalValue&>(*i);
+        result = addRational(result, temp);
+    }
+    return std::make_shared<RationalValue>(result);
+}
+
+ValuePtr rationalMinus(const std::vector<ValuePtr>& params){
+    if(params.size() != 1 && params.size() != 2){
+        throw LispError("rational-minus expects exactly one or two arguments.");
+    }
+    RationalValue result(0);
+    if(params.size() == 1){
+        if(!params[0]->isNumber()){
+            throw LispError("rational-minus expects a number as its first argument.");
+        }
+        RationalValue temp(0);
+        params[0]->isRational() ? temp = dynamic_cast<const RationalValue&>(*params[0]) : temp = RationalValue(params[0]->asNumber());
+        result = minusRational(result, temp);
+    } else {
+        if(!params[0]->isNumber() || !params[1]->isNumber()){
+            throw LispError("rational-minus expects numbers as its arguments.");
+        }
+        RationalValue temp1(0);
+        RationalValue temp2(0);
+        params[0]->isRational() ? temp1 = dynamic_cast<const RationalValue&>(*params[0]) : temp1 = RationalValue(params[0]->asNumber());
+        params[1]->isRational() ? temp2 = dynamic_cast<const RationalValue&>(*params[1]) : temp2 = RationalValue(params[1]->asNumber());
+        result = minusRational(temp1, temp2);
+    }
+    return std::make_shared<RationalValue>(result);
+}
+
+ValuePtr rationalTimes(const std::vector<ValuePtr>& params){
+    RationalValue result(0);
+    for(const auto& i : params){
+        if(!i->isNumber()){
+            throw LispError("rational-times expects numbers as its arguments.");
+        }
+        RationalValue temp(0);
+        if(!i->isRational()) temp = RationalValue(i->asNumber());
+        else temp = dynamic_cast<const RationalValue&>(*i);
+        result = timesRational(result, temp);
+    }
+    return std::make_shared<RationalValue>(result);
+}
+
+ValuePtr rationalDivide(const std::vector<ValuePtr>& params){
+    if(params.size() != 2 && params.size() != 1){
+        throw LispError("rational-divide expects exactly one or two arguments.");
+    }
+    RationalValue result(1);
+    if(params.size() == 1){
+        if(!params[0]->isNumber()){
+            throw LispError("rational-divide expects a number as its first argument.");
+        }
+        RationalValue temp(1);
+        params[0]->isRational() ? temp = dynamic_cast<const RationalValue&>(*params[0]) : temp = RationalValue(params[0]->asNumber());
+        result = divideRational(result, temp);
+    } else {
+        if(!params[0]->isNumber() || !params[1]->isNumber()){
+            throw LispError("rational-divide expects numbers as its arguments.");
+        }
+        if(params[1]->asNumber() == 0){
+            throw LispError("rational-divide: division by zero.");
+        }
+        RationalValue temp1(1);
+        RationalValue temp2(1);
+        params[0]->isRational() ? temp1 = dynamic_cast<const RationalValue&>(*params[0]) : temp1 = RationalValue(params[0]->asNumber());
+        params[1]->isRational() ? temp2 = dynamic_cast<const RationalValue&>(*params[1]) : temp2 = RationalValue(params[1]->asNumber());
+        result = divideRational(temp1, temp2);
+    }
+    return std::make_shared<RationalValue>(result);
+}
+
+ValuePtr rationalAbsolute(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("rational-absolute expects exactly one argument.");
+    }
+    if(!params[0]->isNumber()){
+        throw LispError("rational-absolute expects a number as its argument.");
+    }
+    RationalValue result(params[0]->asNumber());
+    return std::make_shared<RationalValue>(absRational(result));
+}
+
+ValuePtr rationalEqual(const std::vector<ValuePtr>& params){
+    if(params.size() != 2){
+        throw LispError("rational-equal expects exactly two arguments.");
+    }
+    if(!params[0]->isNumber() || !params[1]->isNumber()){
+        throw LispError("rational-equal expects numbers as its arguments.");
+    }
+    RationalValue temp1(1);
+    RationalValue temp2(1);
+    params[0]->isRational() ? temp1 = dynamic_cast<const RationalValue&>(*params[0]) : temp1 = RationalValue(params[0]->asNumber());
+    params[1]->isRational() ? temp2 = dynamic_cast<const RationalValue&>(*params[1]) : temp2 = RationalValue(params[1]->asNumber());
+    return std::make_shared<BooleanValue>(equalRational(temp1, temp2));
+}
+
+ValuePtr matrixSet(const std::vector<ValuePtr>& params){
+    if(params.empty()){
+        throw LispError("matrix-set expects at least one argument.");
+    }
+    int rows = params.size();
+    if(!params[0]->isPair()){
+        throw LispError("matrix-set expects a list of lists.");
+    }
+    int cols = params[0]->toVector().size();
+    std::vector<std::vector<double>> element;
+    for(const auto& param : params){
+        if(!param->isPair()){
+            throw LispError("matrix-set expects a list of lists.");
+        }
+        auto temp = param->toVector();
+        int tempcols = param->toVector().size();
+        if(tempcols != cols){
+            throw LispError("matrix-set expects a list of lists with the same number of columns.");
+        }
+        std::vector<double> temprow;
+        for(const auto& ele : temp){
+            if(!ele->isNumber()){
+                throw LispError("matrix-set expects a list of lists with only numbers.");
+            }
+            temprow.emplace_back(ele->asNumber());
+        }
+        element.emplace_back(temprow);
+    }
+    return std::make_shared<MatrixValue>(element);
+}
+
+ValuePtr matrixTranspose(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("matrix-transpose expects one parameter.");
+    }
+    if(!params[0]->isMatrix()){
+        throw LispError("matrix-transpose expects a matrix as parameter.");
+    }
+    MatrixValue matrix = dynamic_cast<const MatrixValue&>(*params[0]);
+    return std::make_shared<MatrixValue>(matrix.Transpose());
+}
+
 std::unordered_map<std::string, BuiltinProc> builtinProcs = {
     //核心库：
     {"display", &display},
@@ -640,7 +998,29 @@ std::unordered_map<std::string, BuiltinProc> builtinProcs = {
     {">=", &notless},
     {"even?", &even},
     {"odd?", &odd},
-    {"zero?", &zero}
+    {"zero?", &zero},
     // 添加更多的内置过程：以下为ex库
-    // 字符运算库
+    // 更多的算术运算库
+    {"max", &max},
+    {"min", &min},
+    // 字符串运算库
+    {"number->string",&number2String},
+    {"string->number",&string2Number},
+    {"make-string",&makingStr},
+    {"string-ref",&strRef},
+    {"string-length",&strLength},
+    {"string-copy",&strCopy},
+    {"substring",&subStr},
+    {"string-append",&strAppend},
+    // 有理数类库
+    {"rational-set",&rationalSet},
+    {"rational+",&rationalAdd},
+    {"rational-",&rationalMinus},
+    {"rational*",&rationalTimes},
+    {"rational/",&rationalDivide},
+    {"rational-abs",&rationalAbsolute},
+    {"rational-equal",&rationalEqual},
+    // 矩阵类库
+    {"matrix-set",&matrixSet},
+    {"T",&matrixTranspose}
 };

@@ -9,6 +9,7 @@
 
 #include "./tokenizer.h"
 #include "./value.h"
+#include "./rational.h"
 #include "./file_input.h"
 
 #include <stack>
@@ -43,19 +44,29 @@ bool is_parentheses_balanced(const std::string& input){
     return stack.empty();
 }
 
+void printIndented(const std::string& line, int indentLevel){    
+    std::cout << line;
+    for(int i = 0; i < indentLevel; ++i){
+        std::cout << "  ";
+    }
+}
+
 void REPLmode(){
     std::shared_ptr<EvalEnv> env{new EvalEnv};
     std::string input="";
+    int indentLevel = 0;
     while(true){
         try {
-            if(is_parentheses_balanced(input)) std::cout << ">>> ";
-            else std::cout << "... ";
+            if(is_parentheses_balanced(input))  printIndented(">>> ", indentLevel);
+            else printIndented("... ", indentLevel);
             std::string line;
             std::getline(std::cin, line);
             if (std::cin.eof()) {
                 std::exit(0);
             }
+            int newIndent = std::count(line.begin(), line.end(), '(');
             input += line;
+            indentLevel += newIndent - std::count(line.begin(), line.end(), ')');
             if(!is_parentheses_balanced(input)){
                 continue;
             }
@@ -65,6 +76,7 @@ void REPLmode(){
         } catch (std::runtime_error& e) {
             std::cerr << "Error: " << e.what() << std::endl;
             input.clear();
+            indentLevel = 0;
         }        
     }
 }

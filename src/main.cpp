@@ -8,6 +8,7 @@
 #include "./forms.h"
 #include "./file_input.h"
 #include "./read.h"
+#include "./rational.h"
 
 #include "rjsj_test.hpp"
 

@@ -14,6 +14,7 @@ public:
 
     virtual ~Value() = default;
     virtual std::string toString() const { throw BugError("Oops, it is a base Value!"); }
+    virtual std::string asString() const { throw BugError("Oops, it is not a String Value!"); }
 
     using ValuePtr = std::shared_ptr<Value>;
     virtual bool isSelfEvaluating() const { return false; }
@@ -26,12 +27,17 @@ public:
     virtual bool isNumber() const { return false; }
     virtual bool isString() const { return false; }
     virtual bool isProcedure() const { return false; }
+    virtual bool isRational() const { return false; }
+    virtual bool isMatrix() const { return false; }
     virtual double asNumber() const {
-        throw BugError("Cannot convert value to number.");
+        throw LispError("Cannot convert value to number.");
     }
     virtual std::vector<ValuePtr> toVector() const {return {};}
     virtual std::shared_ptr<Value> CAR(){ throw BugError("Not a pair."); }
     virtual std::shared_ptr<Value> CDR(){ throw BugError("Not a pair."); }
+
+    virtual int getrows() { throw BugError("Not a Matrix."); }
+    virtual int getcols() { throw BugError("Not a Matrix."); }
     
 };
 
@@ -59,7 +65,7 @@ public:
     bool isNumber() const override { return true; }
     double asNumber() const override { return value; }
     
-private:
+protected:
     double value;
 };
 
@@ -67,6 +73,7 @@ class StringValue : public Value{
 public:
     explicit StringValue(const std::string& value) : value(value) {}
     std::string toString() const override;
+    std::string asString() const override { return value; }
     bool isSelfEvaluating() const override { return true;}
     bool isString() const override { return true; }
     
