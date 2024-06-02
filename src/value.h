@@ -36,8 +36,8 @@ public:
     virtual std::shared_ptr<Value> CAR(){ throw BugError("Not a pair."); }
     virtual std::shared_ptr<Value> CDR(){ throw BugError("Not a pair."); }
 
-    virtual int getrows() { throw BugError("Not a Matrix."); }
-    virtual int getcols() { throw BugError("Not a Matrix."); }
+    virtual int getrows() const { throw BugError("Not a Matrix."); }
+    virtual int getcols() const { throw BugError("Not a Matrix."); }
     
 };
 

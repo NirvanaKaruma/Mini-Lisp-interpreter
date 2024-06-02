@@ -4,6 +4,21 @@
 
 
 using namespace std::literals;
+
+// 辅助函数
+MatrixValue IdentityMatrix(int n){
+    if (n <= 0) {
+        throw MathError("Matrix dimensions must be positive.");
+    }
+
+    MatrixValue result(n, n);
+    for (int i = 0; i < n; i++) {
+        result.element[i][i] = 1;
+    }
+    return result;
+}
+
+// 内置过程
 ValuePtr display(const std::vector<ValuePtr>& args){
     if(args.size() != 1){
         throw LispError("display procedure takes 1 argument");
@@ -248,6 +263,9 @@ ValuePtr list(const std::vector<ValuePtr>& args){
 }
 
 ValuePtr add(const std::vector<ValuePtr>& params) {
+    if(params.empty()){
+        return std::make_shared<NumericValue>(0);
+    }
     if(params[0]->isNumber()){
         double result = 0;
         for (const auto& i : params) {
@@ -312,14 +330,43 @@ ValuePtr minus(const std::vector<ValuePtr>& params){
 }
 
 ValuePtr times(const std::vector<ValuePtr>& params){
-    double result = 1;
-    for (const auto& i : params) {
-        if (!i->isNumber()) {
-            throw LispError("Cannot add a non-numeric value.");
-        }
-        result *= i->asNumber();
+    if(params.size() < 2){
+        throw LispError("Multiply expects at least two arguments.");
     }
-    return std::make_shared<NumericValue>(result);
+    bool matrixFlag = false;
+    int rows = 0;
+    int cols = 0;
+    for(size_t i = 0; i < params.size(); i++){
+        if(!params[i]->isNumber() && !params[i]->isMatrix()){
+            throw LispError("Multiply expects number(s) or Matrix(es).");
+        }
+        if(params[i]->isMatrix()){
+            matrixFlag = true;
+            rows = params[i]->getrows();
+            cols = params[i]->getcols();
+            break;
+        }
+    }
+
+    if(matrixFlag == false){
+        double result = 1;
+        for(const auto& i : params){
+            result *= i->asNumber();
+        }
+        return std::make_shared<NumericValue>(result);
+    } else {
+        MatrixValue result = IdentityMatrix(rows);
+        for(size_t i = 0; i < params.size(); i++){
+            if(params[i]->isMatrix()){
+                MatrixValue temp = dynamic_cast<const MatrixValue&>(*params[i]);
+                result = result * temp;
+            } else if (params[i]->isNumber()){
+                result =result * params[i]->asNumber();
+            }
+        }
+        return std::make_shared<MatrixValue>(result);
+    }
+    throw LispError("Unexpected values");
 }
 
 ValuePtr divide(const std::vector<ValuePtr>& params){
@@ -513,13 +560,18 @@ ValuePtr equal_num(const std::vector<ValuePtr>& params){
     if(params.size() != 2){
         throw LispError("Equal expects exactly two arguments.");
     }
-    ValuePtr left = params[0];
-    ValuePtr right = params[1];
-    if (!left->isNumber() || !right->isNumber()) {
-        throw LispError("Both arguments to equal_num must be numbers.");
+    if(params[0]->isNumber() && params[1]->isNumber()){
+        ValuePtr left = params[0];
+        ValuePtr right = params[1];
+        bool result = (left->asNumber() == right->asNumber());
+        return std::make_shared<BooleanValue>(result);
+    } else if (params[0]->isMatrix() && params[1]->isMatrix()){
+        MatrixValue left = dynamic_cast<const MatrixValue&>(*params[0]);
+        MatrixValue right = dynamic_cast<const MatrixValue&>(*params[1]);
+        bool result = (left == right);
+        return std::make_shared<BooleanValue>(result);
     }
-    bool result = (left->asNumber() == right->asNumber());
-    return std::make_shared<BooleanValue>(result);
+    throw LispError("Equal expects two numeric or Matrix arguments.");
 }
 
 ValuePtr not_(const std::vector<ValuePtr>& params){
@@ -928,11 +980,13 @@ ValuePtr matrixSet(const std::vector<ValuePtr>& params){
             throw LispError("matrix-set expects a list of lists with the same number of columns.");
         }
         std::vector<double> temprow;
-        for(const auto& ele : temp){
-            if(!ele->isNumber()){
-                throw LispError("matrix-set expects a list of lists with only numbers.");
+        for(const auto& eles : temp){
+            ValuePtr ele = eles;
+            if(ele->isNumber()){
+                temprow.emplace_back(ele->asNumber());
+            } else {
+                throw LispError("matrix-set expects a list of lists with numbers as elements.");
             }
-            temprow.emplace_back(ele->asNumber());
         }
         element.emplace_back(temprow);
     }
@@ -948,6 +1002,98 @@ ValuePtr matrixTranspose(const std::vector<ValuePtr>& params){
     }
     MatrixValue matrix = dynamic_cast<const MatrixValue&>(*params[0]);
     return std::make_shared<MatrixValue>(matrix.Transpose());
+}
+ValuePtr matrixIdentity(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("matrix-identity expects one parameter.");
+    }
+    if(!isInteger(params)){
+        throw LispError("matrix-identity expects an integer as parameter.");
+    }
+    int n = params[0]->asNumber();
+    MatrixValue result = IdentityMatrix(n);
+    return std::make_shared<MatrixValue>(result);
+}
+
+ValuePtr matrixTimes(const std::vector<ValuePtr>& params){
+    if(params.size() != 2){
+        throw LispError("matrix-times expects two parameters.");
+    }
+    if(!params[0]->isMatrix() || !params[1]->isMatrix()){
+        throw LispError("matrix-times expects two matrices as parameters.");
+    }
+    MatrixValue matrix1 = dynamic_cast<const MatrixValue&>(*params[0]);
+    MatrixValue matrix2 = dynamic_cast<const MatrixValue&>(*params[1]);
+    auto result = matrix1 * matrix2;
+    return std::make_shared<MatrixValue>(result);
+}
+
+ValuePtr matrixMultiply(const std::vector<ValuePtr>& params){
+    if(params.size() != 2){
+        throw LispError("matrix-ele-wise-multiply expects two parameters.");
+    }
+    if(!params[0]->isMatrix() || !params[1]->isMatrix()){
+        throw LispError("matrix-ele-wise-multiply expects two matrices as parameters.");
+    }
+    MatrixValue matrix1 = dynamic_cast<const MatrixValue&>(*params[0]);
+    MatrixValue matrix2 = dynamic_cast<const MatrixValue&>(*params[1]);
+    auto result = elementWiseMultiply(matrix1, matrix2);
+    return std::make_shared<MatrixValue>(result);
+}
+
+ValuePtr matrixTrace(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("matrix-trace expects one parameter.");
+    }
+    if(!params[0]->isMatrix()){
+        throw LispError("matrix-trace expects a matrix as parameter.");
+    }
+    MatrixValue matrix = dynamic_cast<const MatrixValue&>(*params[0]);
+    return std::make_shared<NumericValue>(matrix.trace());
+}
+
+ValuePtr matrixDet(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("matrix-det expects one parameter.");
+    }
+    if(!params[0]->isMatrix()){
+        throw LispError("matrix-det expects a matrix as parameter.");
+    }
+    MatrixValue matrix = dynamic_cast<const MatrixValue&>(*params[0]);
+    return std::make_shared<NumericValue>(matrix.det());
+}
+
+ValuePtr matrixRank(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("matrix-rank expects one parameter.");
+    }
+    if(!params[0]->isMatrix()){
+        throw LispError("matrix-rank expects a matrix as parameter.");
+    }
+    MatrixValue matrix = dynamic_cast<const MatrixValue&>(*params[0]);
+    return std::make_shared<NumericValue>(matrix.rank());
+}
+
+ValuePtr matrixUpperTriangle(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("matrix-upper-triangle expects one parameter.");
+    }
+    if(!params[0]->isMatrix()){
+        throw LispError("matrix-upper-triangle expects a matrix as parameter.");
+    }
+    MatrixValue matrix = dynamic_cast<const MatrixValue&>(*params[0]);
+    return std::make_shared<MatrixValue>(matrix.toUpperTriangularForm());
+}
+
+ValuePtr matrixInverse(const std::vector<ValuePtr>& params){
+    if(params.size() != 1){
+        throw LispError("matrix-inverse expects one parameter.");
+    }
+    if(!params[0]->isMatrix()){
+        throw LispError("matrix-inverse expects a matrix as parameter.");
+    }
+    MatrixValue matrix = dynamic_cast<const MatrixValue&>(*params[0]);
+    return std::make_shared<MatrixValue>(matrix.inverse());
 }
 
 std::unordered_map<std::string, BuiltinProc> builtinProcs = {
@@ -1022,5 +1168,13 @@ std::unordered_map<std::string, BuiltinProc> builtinProcs = {
     {"rational-equal",&rationalEqual},
     // 矩阵类库
     {"matrix-set",&matrixSet},
-    {"T",&matrixTranspose}
+    {"T",&matrixTranspose},
+    {"I",&matrixIdentity},
+    {"@",&matrixTimes},
+    {"multiply",&matrixMultiply},
+    {"trace",&matrixTrace},
+    {"det",&matrixDet},
+    {"rank",&matrixRank},
+    {"upper-triangle",&matrixUpperTriangle},
+    {"inverse",&matrixInverse},
 };

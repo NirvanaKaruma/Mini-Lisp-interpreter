@@ -1,8 +1,8 @@
 #ifndef BUILTINS_H
 #define BUILTINS_H
 
-#include "./matrix.h"
 #include "./rational.h"
+#include "./matrix.h"
 #include "./value.h"
 #include <iostream>
 #include <unordered_map>

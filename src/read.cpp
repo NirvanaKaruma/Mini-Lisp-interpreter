@@ -10,7 +10,6 @@
 #include "./tokenizer.h"
 #include "./value.h"
 #include "./rational.h"
-#include "./file_input.h"
 
 #include <stack>
 #include <string>
@@ -81,24 +80,29 @@ void REPLmode(){
     }
 }
 
-void filemode(const std::string& input){
+void filemode(const std::string& filename) {
     std::shared_ptr<EvalEnv> env{new EvalEnv};
-    fileInput in;
-    std::ifstream file;
-    file.open(input);
-    if(!file.is_open()){
+    std::ifstream file(filename);
+    if (!file.is_open()) {
         throw FileError("File not found");
         std::exit(0);
     }
-    in = file;
-    while(in){
-        try{
-            std::string line;
-            getline(in, line);
-            auto result = evaluate(line, *env);
+
+    std::string input;
+    std::string line;
+
+    while(std::getline(file, line)){
+        try {
+            input += line;
+            if(is_parentheses_balanced(input)){
+                auto result = evaluate(input, *env);
+                input.clear();
+            }
         } catch (std::runtime_error& e) {
             std::cerr << "Error: " << e.what() << std::endl;
+            input.clear();
         }
     }
+
     file.close();
 }

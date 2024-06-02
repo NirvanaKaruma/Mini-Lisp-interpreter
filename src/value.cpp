@@ -50,17 +50,17 @@ std::string BuiltinProcValue::toString() const {
 
 std::vector<ValuePtr> PairValue::toVector() const {
     std::vector<ValuePtr> result;
-        const PairValue* current = this;
-        while (current) {
-            result.push_back(current->car);
-            if (auto next = std::dynamic_pointer_cast<PairValue>(current->cdr)) {
-                current = next.get();
-            } else {
-                if (!current->cdr->isNil()) {
-                    result.push_back(current->cdr);
-                }
-                break;
+    const PairValue* current = this;
+    while (current) {
+        result.push_back(current->car);
+        if (auto next = std::dynamic_pointer_cast<PairValue>(current->cdr)) {
+            current = next.get();
+        } else {
+            if (!current->cdr->isNil()) {
+                result.push_back(current->cdr);
             }
+            break;
         }
-        return result;
+    }
+    return result;
 }

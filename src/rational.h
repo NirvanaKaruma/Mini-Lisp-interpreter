@@ -12,6 +12,7 @@ public:
 
     std::string toString() const override;
     virtual bool isSelfEvaluating() const { return true; }
+    bool isNumber() const override { return true; }
     bool isRational() const override { return true; }
     friend RationalValue addRational(const RationalValue& lhs, const RationalValue& rhs);
     friend RationalValue minusRational(const RationalValue& lhs, const RationalValue& rhs);
