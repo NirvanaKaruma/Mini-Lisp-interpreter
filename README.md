@@ -88,7 +88,7 @@
 -   `read-line`
     <br>
 
-    用法：
+    用法：<br>
     `(read-line)`
     <br>
 
@@ -103,7 +103,7 @@
 -   `load-file`
     <br>
 
-    用法：
+    用法：<br>
     `(load-file filename)`
     <br>
 
@@ -116,24 +116,24 @@
 -   `max`
     <br>
 
-    用法：
+    用法：<br>
     `(max x1 x2 ...)`<br>
     `(max list)`
     <br>
 
-    前者接收一系列数类型参数，返回这一系列数的最大值。
+    前者接收一系列数类型参数，返回这一系列数的最大值。<br>
 
     `(max 1 2 3 4 5) => 5`
     <br>
 
-    后者接收一个全数列表参数，返回该列表中的最大值。
+    后者接收一个全数列表参数，返回该列表中的最大值。<br>
     `(max '(1 2 3 4 5)) => 5`
     <br>
 
 -   `min`
     <br>
 
-    用法：
+    用法：<br>
     `(min x1 x2 ...)`<br>
     `(min list)`
     <br>
@@ -145,11 +145,11 @@
 -   `number->string`
     <br>
 
-    用法：
+    用法：<br>
     `(number->string x)`
     <br>
 
-    将数字`x`转换为字符串，并返回。如果x不是数字，则返回`#f`
+    将数字`x`转换为字符串，并返回。如果x不是数字，则返回`#f`<br>
     `(number->string 123) => "123"`<br>
     `(number->string 12.45) => "12.450000"`<br>
     `(number->string "123") => #f`
@@ -158,11 +158,11 @@
 -   `string->number`
     <br>
 
-    用法：
+    用法：<br>
     `(string->number str)`
     <br>
 
-    将字符串`str`转换为数字，并返回。如果`str`不能转化为合法的数字，则返回`#f`
+    将字符串`str`转换为数字，并返回。如果`str`不能转化为合法的数字，则返回`#f`<br>
     `(string->number "123") => 123`<br>
     `(string->number "12.45") => 12.450000`<br>
     `(string->number "123a") => #f`<br>
@@ -172,12 +172,12 @@
 -   `make-string`
     <br>
 
-    用法：
+    用法：<br>
     `(make-string n char)`<br>
     `(make-string n)`
     <br>
 
-    创建一个长度为`n`的字符串，列表中的每个字符都是字符`char`，当`char`缺省时默认为一个空格。如果`n`小于0或者非整数，则报错。
+    创建一个长度为`n`的字符串，列表中的每个字符都是字符`char`，当`char`缺省时默认为一个空格。如果`n`小于0或者非整数，则报错。<br>
     `(make-string 5) => "(五个空格)"`<br>
     `(make-string 5 "a") => "aaaaa"`
     <br>
@@ -185,44 +185,44 @@
 -   `string-ref`
     <br>
 
-    用法：
+    用法：<br>
     `(string-ref str i)`
     <br>
 
-    返回字符串`str`中索引为`i`的单字符构成的字符串。如果`i`超出字符串长度或非整数，则报错。
+    返回字符串`str`中索引为`i`的单字符构成的字符串。如果`i`超出字符串长度或非整数，则报错。<br>
     `(string-ref "abcdefg" 3) => "d"`
     <br>
 
 -   `string-length`
     <br>
 
-    用法：
+    用法：<br>
     `(string-length str)`
     <br>
 
-    返回字符串`str`的长度。如果`str`不是字符串，则报错。
+    返回字符串`str`的长度。如果`str`不是字符串，则报错。<br>
     `(string-length "abcdefg") => 7`
     <br>
 
 -   `string-copy`
     <br>
 
-    用法：
+    用法：<br>
     `(string-copy str)`
     <br>
 
-    返回字符串`str`的拷贝。如果`str`不是字符串，则报错。
+    返回字符串`str`的拷贝。如果`str`不是字符串，则报错。<br>
     <br>
 
 -   `substring`
     <br>
 
-    用法：
+    用法：<br>
     `(substring str pos num)`<br>
     `(substring pos)`
     <br>
 
-    返回字符串`str`中从索引`pos`开始的`num`个字符构成的字符串。如果`str`不为字符串，则报错。如果`pos`超出字符串长度或非整数，则报错。如果`num`为负数或非整数，则报错。如果`num`为0，则返回空字符串。如果`num`缺省，或`pos+num`超出字符串长度，则返回从`pos`开始的剩余字符串。
+    返回字符串`str`中从索引`pos`开始的`num`个字符构成的字符串。如果`str`不为字符串，则报错。如果`pos`超出字符串长度或非整数，则报错。如果`num`为负数或非整数，则报错。如果`num`为0，则返回空字符串。如果`num`缺省，或`pos+num`超出字符串长度，则返回从`pos`开始的剩余字符串。<br>
     `(substring "abcdefg" 3) => "defg"`<br>
     `(substring "abcdefg" 3 2) => "de"`
     <br>
@@ -230,11 +230,11 @@
 -   `string-append`
     <br>
 
-    用法：
+    用法：<br>
     `(string-append str1 str2 ...)`
     <br>
 
-    返回字符串`str1`、`str2`、...的连接结果。如果某一个参数不是字符串，则报错。
+    返回字符串`str1`、`str2`、...的连接结果。如果某一个参数不是字符串，则报错。<br>
     `(string-append "abc" "def" "ghi") => "abcdefghi"`
 
 ### 有理数类
@@ -246,21 +246,21 @@
 -   `rational-set`
     <br>
 
-    用法：
+    用法：<br>
     `(rational-set x y)`<br>
     `(rational-set x)`
     <br>
 
-    对于第一种构造函数，x和y均为整数（若传入不是整数则将其向下取整），返回以x为分子，y为分母的既约分数有理数。
+    对于第一种构造函数，x和y均为整数（若传入不是整数则将其向下取整），返回以x为分子，y为分母的既约分数有理数。<br>
     `(rational-set 5 10) => 1/2`<br>
     `(rational-set 5) => 5`
     <br>
 
-    对于第二种构造函数，x为浮点数，返回值为将x化为既约分数的有理数。
+    对于第二种构造函数，x为浮点数，返回值为将x化为既约分数的有理数。<br>
     `(rational-set 1.5) => 3/2`<br>
     `(rational-set 3) => 3`
     **注意：使用第二种构造函数时，若浮点数x的小数位数过多，会返回精度有限的有理数！**
-    例：
+    例：<br>
     `(rational-set 0.14281428) => 3570357/25000000`<br>
     `(rational-set 0.142814281428) => 142814281/1000000000`，但实际应为`35703570357/250000000000`
     <br>
@@ -271,7 +271,7 @@
 
 #### 有理数的运算
 
-有理数类支持算术运算库的所有运算，如加减乘除取余取整等。例如：
+有理数类支持算术运算库的所有运算，如加减乘除取余取整等。例如：<br>
 `(+ 1 0.5 (rational-set 2 3)) => 2.166667`<br>
 `(- (rational-set 1 4)) => -0.250000`<br>
 `(max 0.1 0.2 (rational-set 2 3)) => 0.666667`
@@ -281,11 +281,11 @@
 -   `rational+`
     <br>
 
-    用法：
+    用法：<br>
     `(rational+ rational1 rational2 ...)`
     <br>
 
-    返回有理数`rational1`、`rational2`、...的和的既约分数形式。如果某一个参数不是数，则报错。
+    返回有理数`rational1`、`rational2`、...的和的既约分数形式。如果某一个参数不是数，则报错。<br>
     `(rational+ (rational-set 2 3) (rational-set 4 5)) => 22/15`<br>
     `(rational+ (rational-set 2 3) 1) => 5/3`
     <br>
@@ -293,12 +293,12 @@
 -   `rational-`
     <br>
 
-    用法：
+    用法：<br>
     `(rational- rational1 rational2)`<br>
     `(rational- rational2)`
     <br>
 
-    rational1缺省时为0。返回有理数`rational1`、`rational2`的差的既约分数形式。如果某一个参数不是数，则报错。
+    rational1缺省时为0。返回有理数`rational1`、`rational2`的差的既约分数形式。如果某一个参数不是数，则报错。<br>
     `(rational- (rational-set 2 3) (rational-set 4 5)) => -2/15`<br>
     `(rational- (rational-set 2 3)) => -2/3`
     <br>
@@ -306,23 +306,23 @@
 -   `rational*`
     <br>
 
-    用法：
+    用法：<br>
     `(rational* rational1 rational2 ...)`
     <br>
 
-    返回有理数`rational1`、`rational2`、...的积的既约分数形式。如果某一个参数不是数，则报错。
+    返回有理数`rational1`、`rational2`、...的积的既约分数形式。如果某一个参数不是数，则报错。<br>
     `(rational* (rational-set 2 3) (rational-set 4 5)) => 8/15`<br>
     `(rational* (rational-set 2 3) 2) => 4/3`
 
 -   `rational/`
     <br>
 
-    用法：
+    用法：<br>
     `(rational/ rational1 rational2)`<br>
     `(rational/ rational2)`
     <br>
 
-    rational1缺省时为1。返回有理数`rational1`、`rational2`的商的既约分数形式。如果某一个参数不是数，则报错。
+    rational1缺省时为1。返回有理数`rational1`、`rational2`的商的既约分数形式。如果某一个参数不是数，则报错。<br>
     `(rational/ (rational-set 2 3) (rational-set 4 5)) => 5/6`<br>
     `(rational/ (rational-set 2 3)) => 3/2`
     <br>
@@ -330,11 +330,11 @@
 -   `rational-abs`
     <br>
 
-    用法：
+    用法：<br>
     `(rational-abs rational)`
     <br>
 
-    返回有理数`rational`的绝对值的既约分数形式。如果`rational`不是数，则报错。
+    返回有理数`rational`的绝对值的既约分数形式。如果`rational`不是数，则报错。<br>
     `(rational-abs (rational-set 2 -3)) => 2/3`<br>
     `(rational-abs -0.5) => 1/2`
     <br>
@@ -342,11 +342,11 @@
 -   `rational-equal`
     <br>
 
-    用法：
+    用法：<br>
     `(rational-equal rational1 rational2)`
     <br>
 
-    以比较分子分母的方式判断有理数`rational1`、`rational2`是否相等。如果相等则返回`#t`，否则返回`#f`，如果某一个参数不是数，则报错。
+    以比较分子分母的方式判断有理数`rational1`、`rational2`是否相等。如果相等则返回`#t`，否则返回`#f`，如果某一个参数不是数，则报错。<br>
     `(rational-equal (rational-set 2 3) (rational-set 4 6)) => #t`<br>
     `(rational-equal (rational-set 2 3) (rational-set 4 5)) => #f`
 
