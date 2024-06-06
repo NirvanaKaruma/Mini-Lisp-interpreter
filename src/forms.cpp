@@ -1,5 +1,9 @@
+#include "./read.h"
 #include "./forms.h"
 #include "./builtins.h"
+#include "./token.h"
+#include "./tokenizer.h"
+#include "./parser.h"
 #include <algorithm>
 #include <iterator>
 
@@ -99,6 +103,7 @@ ValuePtr orForm(const std::vector<ValuePtr>& args, EvalEnv& env){
 ValuePtr condForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
     if (args.size() >= 2) {
         ValuePtr result;
+        bool flag = true; // 判断是否所有字句都被跳过
         for (int i = 0; i < args.size(); i++) {
             auto relation = args[i]->toVector();
             if (relation[0]->toString() == "else"){
@@ -107,10 +112,12 @@ ValuePtr condForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
             }
             if (relation.size() == 1) return env.eval(relation[0]);
             if (env.eval(relation[0])->asBool()) {
+                flag = false;
                 result = env.eval(relation[1]);
                 break;
             }
         }
+        if(flag == true) throw LispError("Invalid cond");
         return result;
     } else
         throw LispError("Invalid number of arguments for cond");
@@ -158,12 +165,34 @@ ValuePtr quasiquoteForm(const std::vector<ValuePtr>& args, EvalEnv& env){
     for(auto& i : value){
         if(i->isPair()){
             auto pair = i->toVector();
-            if(pair[0]->toString() == "unquote"){
+            if(pair[0]->asSymbol() == "unquote"){
                 i = env.eval(pair[1]);
             }
         }
     }
     return list(value);
+}
+
+ValuePtr loadFileForm(const std::vector<ValuePtr>& args, EvalEnv& env){
+    if(args.size() != 1){
+        throw LispError("Invalid number of arguments for load-file");
+    }
+    std::string filename = args[0]->toString();
+    filemode(filename);
+    return std::make_shared<NilValue>();
+}
+
+ValuePtr readlineForm(const std::vector<ValuePtr>& args, EvalEnv& env){
+    if(!args.empty()){
+        throw LispError("Invalid number of arguments for read");
+    }
+    std::cout<<"IN: ";
+    auto envChild = env.shared_from_this();
+    std::string input = readInput();
+    auto tokens = Tokenizer::tokenize(input);
+    Parser parser(std::move(tokens));
+    auto value = parser.parse();
+    return envChild->eval(value);
 }
 
 const std::unordered_map<std::string, SpecialFormType*> SPECIAL_FORMS{
@@ -176,5 +205,7 @@ const std::unordered_map<std::string, SpecialFormType*> SPECIAL_FORMS{
     {"cond", condForm},
     {"let", letForm},
     {"begin", beginForm},
-    {"quasiquote", quasiquoteForm}
+    {"quasiquote", quasiquoteForm},
+    {"load-file", loadFileForm},
+    {"read-line", readlineForm}
 };

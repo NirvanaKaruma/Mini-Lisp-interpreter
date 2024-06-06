@@ -1,4 +1,3 @@
-
 #include "./read.h"
 #include <fstream>
 #include <iostream>
@@ -43,6 +42,42 @@ bool is_parentheses_balanced(const std::string& input){
     return stack.empty();
 }
 
+bool is_blockComment_balanced(const std::string& input){
+    auto pos = input.find("#|");
+    if (pos == std::string::npos) return true;
+        auto endPos = input.find("|#", pos);
+    if (endPos == std::string::npos) {
+        return false;
+    } else {
+        return true;
+    }       
+}
+
+void deleteLineComment(std::string& input){
+    auto pos = input.find(";");
+    if (pos == std::string::npos) return;
+    input.erase(pos);
+}
+
+void deleteBlockComment(std::string& input){
+    auto pos = input.find("#|");
+    if (pos == std::string::npos) return;
+    auto endPos = input.find("|#", pos);
+    if (endPos == std::string::npos) {
+        throw FileError("Block comment is not closed");
+        std::exit(0);
+    }
+    input.erase(pos, endPos - pos + 2);
+}
+
+void deletenewline(std::string& input){
+    while(input.find("\n") != std::string::npos){
+        auto pos = input.find("\n");
+        input.erase(pos, 1);
+    }
+}
+
+
 void printIndented(const std::string& line, int indentLevel){    
     std::cout << line;
     for(int i = 0; i < indentLevel; ++i){
@@ -63,15 +98,25 @@ void REPLmode(){
             if (std::cin.eof()) {
                 std::exit(0);
             }
-            int newIndent = std::count(line.begin(), line.end(), '(');
+            deleteLineComment(line);
+            deletenewline(line);
+            if(line.empty()) continue;
+            //  缩进规则
+            int newIndent = std::count(line.begin(), line.end(), '(') - std::count(line.begin(), line.end(), ')');
+            indentLevel += newIndent;
+
             input += line;
-            indentLevel += newIndent - std::count(line.begin(), line.end(), ')');
-            if(!is_parentheses_balanced(input)){
+            if(!is_blockComment_balanced(input)) continue;
+            deleteBlockComment(input);
+            if(!is_parentheses_balanced(input)) {
+                input += " ";
                 continue;
             }
+            if(input.empty()) continue;
             auto result = evaluate(input, *env);
             std::cout << result->toString() << std::endl;
             input.clear();
+            indentLevel = 0;
         } catch (std::runtime_error& e) {
             std::cerr << "Error: " << e.what() << std::endl;
             input.clear();
@@ -93,8 +138,16 @@ void filemode(const std::string& filename) {
 
     while(std::getline(file, line)){
         try {
+            deleteLineComment(line);
+            if(line.empty()) continue;
             input += line;
-            if(is_parentheses_balanced(input)){
+            if(!is_blockComment_balanced(input)) continue;
+            deleteBlockComment(input);
+            if(!is_parentheses_balanced(input)) {
+                input += " ";
+                continue;
+            }
+            if(!input.empty()){
                 auto result = evaluate(input, *env);
                 input.clear();
             }
@@ -105,4 +158,14 @@ void filemode(const std::string& filename) {
     }
 
     file.close();
+}
+
+std::string readInput(){
+    std::string input;
+    std::getline(std::cin, input);
+    while(input.empty()){
+        std::cout << "Please enter a non-empty string: ";
+        std::getline(std::cin, input);
+    }
+    return input;
 }

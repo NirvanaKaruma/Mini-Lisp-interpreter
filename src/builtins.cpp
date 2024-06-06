@@ -257,7 +257,7 @@ ValuePtr list(const std::vector<ValuePtr>& args){
         // 如果没有参数，返回一个空的PairValue表示空列表
         return std::make_shared<NilValue>();
     }
-    auto car = args[0];
+    auto car = args.front();
     std::vector<ValuePtr> cdr(args.begin() + 1, args.end());
     return std::make_shared<PairValue>(car, list(cdr));
 }
@@ -330,9 +330,7 @@ ValuePtr minus(const std::vector<ValuePtr>& params){
 }
 
 ValuePtr times(const std::vector<ValuePtr>& params){
-    if(params.size() < 2){
-        throw LispError("Multiply expects at least two arguments.");
-    }
+    if(params.empty()) return std::make_shared<NumericValue>(1);
     bool matrixFlag = false;
     int rows = 0;
     int cols = 0;
@@ -516,23 +514,17 @@ ValuePtr remainder(const std::vector<ValuePtr>& params) {
         throw LispError("Both arguments to remainder must be numbers.");
     }
 
-    int d = dividend->asNumber();
-    int s = divisor->asNumber();
+    double d = dividend->asNumber();
+    double s = divisor->asNumber();
 
     // 检查除数是否为零
-    if (s == 0) {
+    if (std::abs(s) < std::numeric_limits<double>::epsilon()) {
         throw LispError("Cannot divide by zero.");
     }
 
-    // 计算余数
-    int remainder = d % s;
+    double k =std::trunc(d / s);
 
-    // 确保余数与被除数有相同的正负性
-    if (d < 0) {
-        remainder = -(-d % s);
-    }
-
-    return std::make_shared<NumericValue>(remainder);
+    return std::make_shared<NumericValue>(d - k * s);
 }
 
 ValuePtr eq(const std::vector<ValuePtr>& params){
@@ -683,6 +675,19 @@ ValuePtr max(const std::vector<ValuePtr>& params){
         throw LispError("Max expects at least one argument.");
     }
     double result;
+    if(params.size() == 1 && params[0]->isPair()){
+        auto list = params[0]->toVector();
+        if(list.empty()) throw LispError("Cannot get max of empty list.");
+        if(!list[0]->isNumber()) throw LispError("Cannot get max of non-number list.");
+        result = list[0]->asNumber();
+        for(const auto& i : list){
+            if(!i->isNumber()) throw LispError("Cannot get max of non-number list.");
+            if(i->asNumber() > result){
+                result = i->asNumber();
+            }
+        }
+        return std::make_shared<NumericValue>(result);
+    }
     if(!params[0]->isNumber()){
         throw LispError("All arguments to max must be numbers.");
     }
@@ -703,6 +708,19 @@ ValuePtr min(const std::vector<ValuePtr>& params){
         throw LispError("Min expects at least one argument.");
     }
     double result;
+    if(params.size() == 1 && params[0]->isPair()){
+        auto list = params[0]->toVector();
+        if(list.empty()) throw LispError("Cannot get min of empty list.");
+        if(!list[0]->isNumber()) throw LispError("Cannot get min of non-number list.");
+        result = list[0]->asNumber();
+        for(const auto& i : list){
+            if(!i->isNumber()) throw LispError("Cannot get min of non-number list.");
+            if(i->asNumber() < result){
+                result = i->asNumber();
+            }
+        }
+        return std::make_shared<NumericValue>(result);
+    }
     if(!params[0]->isNumber()){
         throw LispError("All arguments to min must be numbers.");
     }
@@ -722,6 +740,7 @@ ValuePtr number2String(const std::vector<ValuePtr>& params){
     if(params.size() != 1){
         throw LispError("number->string expects exactly one argument.");
     }
+    if(!params[0]->isNumber()) return std::make_shared<BooleanValue>(false);
     double num = params[0]->asNumber();
     std::string result;
     if(num == static_cast<int>(num)){
@@ -736,6 +755,7 @@ ValuePtr string2Number(const std::vector<ValuePtr>& params){
     if(params.size() != 1){
         throw LispError("string->number expects exactly one argument.");
     }
+    if(!params[0]->isString()) return std::make_shared<BooleanValue>(false);
     std::string str = params[0]->asString();
     try{
         double num = std::stod(str);
@@ -750,6 +770,9 @@ ValuePtr makingStr(const std::vector<ValuePtr>& params){
         throw LispError("make-string expects exactly one or two arguments.");
     }
     int num = static_cast<int>(params[0]->asNumber());
+    if(num < 0 || (params[0]->asNumber() != static_cast<int>(params[0]->asNumber()))){
+        throw LispError("make-string expects a non-negative integer as its first argument.");
+    }
     char c = ' ';
     if(params.size() == 2){
         if(!params[1]->isString() || params[1]->asString().size() != 1){
@@ -813,11 +836,26 @@ ValuePtr subStr(const std::vector<ValuePtr>& params){
         return strCopy(params);
     }
     std::string str = params[0]->asString();
+    if(!params[1]->isNumber()){
+        throw LispError("subString expects a number as its second argument.");
+    }
+    if(params[1]->asNumber() != static_cast<int>(params[1]->asNumber())){
+        throw LispError("subString expects a non-negative integer as its second argument.");
+    }
     int pos = params[1]->asNumber();
     std::size_t num = std::string::npos;
     // 两个参数，相当于从某个pos开始截取字符串
     // 三个参数，相当于从某个pos开始截取num个字符
-    if(params.size() == 3) num = static_cast<std::size_t>(params[2]->asNumber());
+    if(params.size() == 3) {
+        if(!params[2]->isNumber()){
+            throw LispError("subString expects a number as its third argument.");
+        }
+        if(params[2]->asNumber() != static_cast<int>(params[2]->asNumber())){
+            throw LispError("subString expects a non-negative integer as its third argument.");
+        }
+        num = params[2]->asNumber();
+    }
+    
     if (num < 0 || pos < 0 || pos >= str.size()){
         throw LispError("illegal subString.");
     }
@@ -894,7 +932,7 @@ ValuePtr rationalMinus(const std::vector<ValuePtr>& params){
 }
 
 ValuePtr rationalTimes(const std::vector<ValuePtr>& params){
-    RationalValue result(0);
+    RationalValue result(1);
     for(const auto& i : params){
         if(!i->isNumber()){
             throw LispError("rational-times expects numbers as its arguments.");
@@ -942,7 +980,12 @@ ValuePtr rationalAbsolute(const std::vector<ValuePtr>& params){
     if(!params[0]->isNumber()){
         throw LispError("rational-absolute expects a number as its argument.");
     }
-    RationalValue result(params[0]->asNumber());
+    if(!params[0]->isRational()){
+        double value = std::abs(params[0]->asNumber());
+        return std::make_shared<RationalValue>(value);
+    }
+    RationalValue result(0);
+    result = dynamic_cast<const RationalValue&>(*params[0]);
     return std::make_shared<RationalValue>(absRational(result));
 }
 

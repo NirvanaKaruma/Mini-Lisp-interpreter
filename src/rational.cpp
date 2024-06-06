@@ -15,10 +15,16 @@ void RationalValue::simplify() {
 
 RationalValue::RationalValue(double value) : NumericValue(value) {
     int newDenominator = 1;
-    while(true){
+    int flag = 0;
+    while(flag < 100){
         if(value - (int)(value) == 0) break;
         value *= 10;
         newDenominator *= 10;
+        flag++;
+        // 如果newDenominator或者value再进行乘以十超出了整形的范围，则退出循环
+        if(newDenominator  > INT_MAX / 10 || value > INT_MAX / 10){
+            break;
+        }
     }
     this->numerator = static_cast<int>(value);
     this->denominator = newDenominator;
@@ -44,20 +50,38 @@ std::string RationalValue::toString() const {
 }
 
 RationalValue addRational(const RationalValue& lhs, const RationalValue& rhs){
-    int newNumerator = lhs.numerator * rhs.denominator + rhs.numerator * lhs.denominator;
-    int newDenominator = lhs.denominator * rhs.denominator;
+    long long newNumerator = lhs.numerator * rhs.denominator + rhs.numerator * lhs.denominator;
+    long long newDenominator = lhs.denominator * rhs.denominator;
+    if(newNumerator == 0) return RationalValue(0, 1);
+    long long gcd = std::gcd(newNumerator, newDenominator);
+    if(gcd != 0){
+        newNumerator /= gcd;
+        newDenominator /= gcd;
+    }
     return RationalValue(newNumerator, newDenominator);
 }
 
 RationalValue minusRational(const RationalValue& lhs, const RationalValue& rhs){
-    int newNumerator = lhs.numerator * rhs.denominator - rhs.numerator * lhs.denominator;
-    int newDenominator = lhs.denominator * rhs.denominator;
+    long long newNumerator = lhs.numerator * rhs.denominator - rhs.numerator * lhs.denominator;
+    long long newDenominator = lhs.denominator * rhs.denominator;
+    if(newNumerator == 0) return RationalValue(0, 1);
+    long long gcd = std::gcd(newNumerator, newDenominator);
+    if(gcd != 0){
+        newNumerator /= gcd;
+        newDenominator /= gcd;
+    }
     return RationalValue(newNumerator, newDenominator);
 }
 
 RationalValue timesRational(const RationalValue& lhs, const RationalValue& rhs){
-    int newNumerator = lhs.numerator * rhs.numerator;
-    int newDenominator = lhs.denominator * rhs.denominator;
+    long long newNumerator = lhs.numerator * rhs.numerator;
+    long long newDenominator = lhs.denominator * rhs.denominator;
+    if(newNumerator == 0) return RationalValue(0, 1);
+    long long gcd = std::gcd(newNumerator, newDenominator);
+    if(gcd != 0){
+        newNumerator /= gcd;
+        newDenominator /= gcd;
+    }
     return RationalValue(newNumerator, newDenominator);
 }
 
@@ -65,13 +89,21 @@ RationalValue divideRational(const RationalValue& lhs, const RationalValue& rhs)
     if(rhs.numerator == 0){
         throw MathError("Division by zero");
     }
-    int newNumerator = lhs.numerator * rhs.denominator;
-    int newDenominator = lhs.denominator * rhs.numerator;
+    long long newNumerator = lhs.numerator * rhs.denominator;
+    long long newDenominator = lhs.denominator * rhs.numerator;
+    if(newNumerator == 0) return RationalValue(0, 1);
+    long long gcd = std::gcd(newNumerator, newDenominator);
+    if(gcd != 0){
+        newNumerator /= gcd;
+        newDenominator /= gcd;
+    }
     return RationalValue(newNumerator, newDenominator);
 }
 
 RationalValue absRational(const RationalValue& lhs){
-    return RationalValue(std::abs(lhs.numerator), lhs.denominator);
+    int newNumerator = lhs.numerator > 0 ? lhs.numerator : -lhs.numerator;
+    int newDenominator = lhs.denominator;
+    return RationalValue(newNumerator, newDenominator);
 }
 
 bool equalRational(const RationalValue& lhs, const RationalValue& rhs){

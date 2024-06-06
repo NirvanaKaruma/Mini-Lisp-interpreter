@@ -12,6 +12,9 @@ typedef ValuePtr (*BuiltinProc)(const std::vector<ValuePtr>&);
 
 extern std::unordered_map<std::string, BuiltinProc> builtinProcs;
 
+// 辅助函数
+MatrixValue IdentityMatrix(int n);
+
 //  以下为课程要求内置过程
 ValuePtr display(const std::vector<ValuePtr>& args);
 ValuePtr displayln(const std::vector<ValuePtr>& args);
@@ -56,5 +59,40 @@ ValuePtr notless(const std::vector<ValuePtr>& params);
 ValuePtr even(const std::vector<ValuePtr>& params);
 ValuePtr odd(const std::vector<ValuePtr>& params);
 ValuePtr zero(const std::vector<ValuePtr>& params);
+
+// 更多的算术运算库
+ValuePtr max(const std::vector<ValuePtr>& params);
+ValuePtr min(const std::vector<ValuePtr>& params);
+
+// 字符串运算库
+ValuePtr number2String(const std::vector<ValuePtr>& params);
+ValuePtr string2Number(const std::vector<ValuePtr>& params);
+ValuePtr makingStr(const std::vector<ValuePtr>& params);
+ValuePtr strRef(const std::vector<ValuePtr>& params);
+ValuePtr strLength(const std::vector<ValuePtr>& params);
+ValuePtr strCopy(const std::vector<ValuePtr>& params);
+ValuePtr subStr(const std::vector<ValuePtr>& params);
+ValuePtr strAppend(const std::vector<ValuePtr>& params);
+
+// 有理数类库
+ValuePtr rationalSet(const std::vector<ValuePtr>& params);
+ValuePtr rationalAdd(const std::vector<ValuePtr>& params);
+ValuePtr rationalMinus(const std::vector<ValuePtr>& params);
+ValuePtr rationalTimes(const std::vector<ValuePtr>& params);
+ValuePtr rationalDivide(const std::vector<ValuePtr>& params);
+ValuePtr rationalAbsolute(const std::vector<ValuePtr>& params);
+ValuePtr rationalEqual(const std::vector<ValuePtr>& params);
+
+// 矩阵类库
+ValuePtr matrixSet(const std::vector<ValuePtr>& params);
+ValuePtr matrixTranspose(const std::vector<ValuePtr>& params);
+ValuePtr matrixIdentity(const std::vector<ValuePtr>& params);
+ValuePtr matrixTimes(const std::vector<ValuePtr>& params);
+ValuePtr matrixMultiply(const std::vector<ValuePtr>& params);
+ValuePtr matrixTrace(const std::vector<ValuePtr>& params);
+ValuePtr matrixDet(const std::vector<ValuePtr>& params);
+ValuePtr matrixRank(const std::vector<ValuePtr>& params);
+ValuePtr matrixUpperTriangle(const std::vector<ValuePtr>& params);
+ValuePtr matrixInverse(const std::vector<ValuePtr>& params);
 
 #endif
