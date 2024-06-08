@@ -76,6 +76,7 @@ public:
     std::string asString() const override { return value; }
     bool isSelfEvaluating() const override { return true;}
     bool isString() const override { return true; }
+
     
 private:
     std::string value;

@@ -132,6 +132,9 @@ ValuePtr letForm(const std::vector<ValuePtr>& args, EvalEnv& env){
     std::vector<ValuePtr> varValues;
     for (int i = 0; i < bindings.size(); i++){
         auto var = bindings[i]->toVector();
+        if(var.size() != 2){
+            throw LispError("Invalid number of arguments for let");
+        }
         varNames.emplace_back(var[0]->toString());
         varValues.emplace_back(env.eval(var[1]));
     }

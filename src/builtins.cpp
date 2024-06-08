@@ -23,7 +23,11 @@ ValuePtr display(const std::vector<ValuePtr>& args){
     if(args.size() != 1){
         throw LispError("display procedure takes 1 argument");
     }
-    std::cout << args[0]->toString();
+    if(auto str = std::dynamic_pointer_cast<StringValue>(args[0])){
+        std::cout << str->asString();
+    } else {
+        std::cout << args[0]->toString();
+    }
 
     return std::make_shared<NilValue>();
 }
@@ -32,7 +36,12 @@ ValuePtr displayln(const std::vector<ValuePtr>& args){
     if(args.size() != 1){
         throw LispError("display procedure takes 1 argument");
     }
-    std::cout << args[0]->toString() << '\n';
+    if(auto str = std::dynamic_pointer_cast<StringValue>(args[0])){
+        std::cout << str->asString();
+    } else {
+        std::cout << args[0]->toString();
+    }
+    std::cout << std::endl;
 
     return std::make_shared<NilValue>();
 }
@@ -48,7 +57,7 @@ ValuePtr displayln(const std::vector<ValuePtr>& args){
         }
         int exitCode = static_cast<int>(args[0]->asNumber());
         double num = args[0]->asNumber();
-        if(!(num != exitCode)){
+        if(num != exitCode){
             throw LispError("exit procedure takes a int number as argument");
         } else {
             if (exitCode < 0 || exitCode > 255) {
