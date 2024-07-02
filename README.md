@@ -219,7 +219,7 @@
 
     用法：<br>
     `(substring str pos num)`<br>
-    `(substring pos)`
+    `(substring str pos)`
     <br>
 
     返回字符串`str`中从索引`pos`开始的`num`个字符构成的字符串。如果`str`不为字符串，则报错。如果`pos`超出字符串长度或非整数，则报错。如果`num`为负数或非整数，则报错。如果`num`为0，则返回空字符串。如果`num`缺省，或`pos+num`超出字符串长度，则返回从`pos`开始的剩余字符串。<br>

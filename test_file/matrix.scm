@@ -1,3 +1,5 @@
+#|这是一个多行注释测试块
+1+1=2，而我写不完作业|#
 (define x (matrix-set `(1 2 3) `(4 5 6)))
 (define y (matrix-set `(7 8 9) `(10 11 12)))
 (print "x= " x)
